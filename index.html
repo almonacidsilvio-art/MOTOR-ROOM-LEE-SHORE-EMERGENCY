@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MOTOR ROOM: Lee Shore Emergency</title>
+<style>
+:root{--bg:#121417;--panel:#1d2126;--steel:#3a4047;--rust:#8a5a3b;--ok:#3ddc6a;--warn:#ffc83d;--crit:#ff3b3b;--txt:#cfd3d6;--dim:#7b8189;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.4 "Courier New",monospace;max-width:900px;margin:auto;padding:8px;
+background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px)}
+body.alarm{animation:fl .6s}
+@keyframes fl{0%,60%{box-shadow:inset 0 0 0 6px var(--crit)}100%{box-shadow:none}}
+h1{font-size:15px;margin:0;letter-spacing:2px;color:var(--warn)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#tm{font-size:26px;color:var(--ok)} #tm.low{color:var(--crit)}
+#sea{position:relative;height:22px;margin:6px 0;border:2px solid var(--steel);background:linear-gradient(90deg,#0d2a3a,#14394f 80%,#4a3a2a 80%,#6b4a2a)}
+#ship{position:absolute;top:2px;width:22px;height:12px;background:var(--txt);clip-path:polygon(0 0,80% 0,100% 50%,80% 100%,0 100%);transition:left .3s}
+#dist{position:absolute;right:6px;top:1px;font-size:12px;color:#fff}
+nav{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+button{font:inherit;color:var(--txt);background:var(--steel);border:2px solid #555c64;border-bottom-color:#22262a;border-right-color:#22262a;padding:8px 10px;cursor:pointer;text-transform:uppercase}
+button:active{transform:translateY(1px)} button.on{background:#2b5a3a;border-color:var(--ok)} button.sel{outline:2px solid var(--warn)}
+.card{background:var(--panel);border:2px solid var(--steel);padding:10px;margin:6px 0;border-radius:2px}
+.card h2{margin:0 0 6px;font-size:12px;color:var(--rust);letter-spacing:1px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px}
+.led{display:inline-block;width:12px;height:12px;border-radius:50%;background:#333;border:2px solid #000;vertical-align:middle;margin-right:6px}
+.led.on{background:var(--ok);box-shadow:0 0 8px var(--ok)} .led.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)} .led.crit{background:var(--crit);box-shadow:0 0 8px var(--crit)}
+#cocks,#fips{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+body{padding-bottom:230px}
+#guide{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:8;max-width:min(340px,calc(100vw - 16px));display:flex;gap:8px;align-items:flex-end}
+#bub{background:#142a1c;border:2px solid var(--ok);padding:8px 10px;font-size:12px}#bub.hide{display:none}
+#gQ{margin:4px 0;color:var(--txt)}#gM{margin:4px 0;color:var(--warn)}
+#tech{font-size:46px;line-height:1;cursor:pointer;animation:bob 2s infinite;filter:drop-shadow(0 0 4px #000)}
+@keyframes bob{50%{transform:translateY(-4px)}}
+#intro{overflow:auto;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+#gT{color:var(--ok);font-size:14px;display:block}#gM{font-size:12px;margin-top:2px}
+.hl{outline:3px solid var(--ok);outline-offset:2px;animation:pl 1s infinite}
+@keyframes pl{50%{outline-color:transparent}}
+#fips .cock{white-space:pre-line;padding:6px 2px;font-size:10px}#fips .cock.open{background:#1f5a33;border-color:var(--ok)}#fips .cock:not(.open){background:#5a1f1f;border-color:var(--crit)}
+.hint{color:var(--dim);font-size:12px;margin:4px 0}
+#edu{height:140px;overflow:auto;font-size:12px;background:#0c0e10;border:2px solid var(--steel);padding:6px}
+.cock{position:relative;padding:18px 2px 6px;font-size:11px}
+.cock.open{background:#5a4a1a;border-color:var(--warn)}
+.spray{position:absolute;left:50%;top:0;width:6px;height:0;background:#6cc4ff;transform:translateX(-50%);opacity:.9}
+.spray.go{animation:sp 1s steps(4) 4}
+@keyframes sp{0%{height:0}100%{height:16px}}
+canvas{width:120px;height:120px;image-rendering:pixelated;background:#0c0e10;border:2px solid var(--steel)}
+.gs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.gs div{text-align:center;font-size:11px}
+input[type=range]{width:100%}
+#start{width:100%;padding:16px;font-size:18px;background:#7a1f1f;border-color:var(--crit)}
+#log{min-height:38px;border:2px solid var(--steel);padding:6px;background:#0c0e10}
+#log.bad{color:var(--crit)} #log.good{color:var(--ok)}
+ol{margin:0;padding-left:20px;color:var(--dim)} li.done{color:var(--ok)}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:9}
+#ov.show{display:flex} #ov h2{font-size:22px;margin:0 0 10px}
+.hide{display:none}
+#eng.sa .go,#eng.sa .gf,#eng.so .ga,#eng.so .gf,#eng.sf .ga,#eng.sf .go{opacity:.12}
+#eng [id^=hd],#eng [id^=pi],#eng [id^=rod]{pointer-events:none}
+@keyframes sh{20%{transform:translateX(-5px)}60%{transform:translateX(5px)}}
+body.alarm #eng{animation:sh .4s}
+@keyframes gf{0%{background:#3ddc6a;color:#000}100%{background:transparent}}
+li.done{animation:gf .8s}
+.card{position:relative;background-image:repeating-linear-gradient(45deg,rgba(138,90,59,.07) 0 2px,transparent 2px 5px)}
+.card::before,.card::after{content:'';position:absolute;top:3px;width:4px;height:4px;background:#59616a;border-radius:50%}
+.card::before{left:3px}.card::after{right:3px}
+#sc{width:100%;height:auto;display:block;background:#0b1620;border:2px solid var(--steel);margin:6px 0}
+#sc text{fill:#cfd3d6;font:7px monospace}#sea{display:none}
+#hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--bg);padding-bottom:4px;border-bottom:2px solid var(--steel)}
+#hr{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+#hr #sc{flex:2 1 300px;margin:0;height:auto;max-height:130px;min-width:0}
+#hr .card{flex:1 1 260px;margin:0;padding:4px}#hr canvas{width:84px;height:84px}#hud .top{margin:2px 0}
+.lay{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}.lay button{padding:4px 8px;font-size:11px}
+#eng{width:100%;height:auto;display:block;background:#0c0e10;border:2px solid var(--steel)}
+#eng text{fill:#9aa0a6;font:8px monospace;pointer-events:none}
+#eng .clk{cursor:pointer}#eng .clk:hover{stroke:#fff}
+</style></head><body>
+<div class="top"><h1>MOTOR ROOM: LEE SHORE EMERGENCY</h1><div>ESTADO: <b id="st">-</b></div><div id="tm">04:00</div></div>
+<svg id="sc" viewBox="0 0 600 130"></svg>
+<div id="sea"><div id="ship"></div><span id="dist"></span></div>
+<div id="guide"><div id="bub"><span style="font-size:10px;color:var(--dim)">TÉC. MARCOS · TÉCNICO DE GUARDIA</span><b id="gT"></b><div id="gQ"></div><div id="gM" class="hide"></div><button id="gH">💡 Pista</button></div><div id="tech" title="Mostrar / ocultar al técnico">👷</div></div>
+<nav><button id="mu" title="Silenciar / activar sonido">🔊</button><button id="rst" title="Reiniciar partida">↺</button><button id="n1" class="sel">1 · Inspección</button><button id="n2">2 · Panel LOP</button></nav>
+
+<div class="card"><h2>MOTOR PRINCIPAL (sala de máquinas del buque) · pulsa los componentes · pasa el cursor para ver qué hacen</h2>
+<div class="lay">Capa: <button data-l="" class="sel">Todo</button><button data-l="sa">Aire</button><button data-l="so">Aceite</button><button data-l="sf">Combustible</button></div>
+<svg id="eng" viewBox="0 0 600 225"></svg></div>
+<div class="card"><h2 id="zT"></h2><div class="gs"><svg id="zs" viewBox="0 0 120 200" style="width:150px;background:#0c0e10;border:2px solid var(--steel)"></svg><canvas id="pv" width="210" height="150" style="width:250px;height:178px"></canvas></div><div id="zN" class="hint"></div></div>
+
+<section id="v1">
+ <div class="grid">
+  <div class="card"><h2>1 · SENTINA / VIRADOR</h2>
+   <p><span class="led" id="lBil"></span><button id="bBil">Inspeccionar sentina</button></p>
+   <p><span class="led crit" id="lGear"></span><button id="bGear">Virador: ACOPLADO</button></p></div>
+  <div class="card"><h2>2 · BOMBA PRE-LUBE</h2>
+   <p><span class="led" id="lPump"></span><button id="bPump">Bomba: OFF</button></p>
+   <p>Presión aceite: <b id="oilTxt">0.0</b> bar (mín. 1.5)</p></div>
+ </div>
+ <div class="card"><h2>4 · PURGA DE AIRE DEL COMBUSTIBLE (bombas FIP) + MGO</h2>
+  <p class="hint">¿Qué pasa? Tras el rolido entró aire en las bombas de inyección (FIP). El aire se comprime como un resorte y la bomba no logra los 1000 bar que abren el inyector: el cilindro no recibe combustible. Hay que sacar ese aire, como purgar un radiador.</p>
+  <p><b>A · Purgar:</b> las bombas con burbujas (rojo, <b>◦ ◦ AIRE</b>) tienen el problema. Toca <b>PURGAR</b> en cada una: sale aire, luego combustible, y pasa a verde <b>✓ OK</b>.</p>
+  <div id="fips"></div><div style="height:10px;background:#111;border:1px solid var(--steel);margin:6px 0"><div id="fpB" style="height:100%;width:0;background:var(--ok)"></div></div><p id="fpS" class="hint"></p>
+  <p><b>B · Cambiar a MGO</b> (combustible liviano que arranca en frío): <button id="bMgo">Selector: HFO</button></p>
+  <p><b>C · Verificar presión:</b> <b id="fpTxt">0</b> bar (debe ser ≥ 6)</p></div>
+ <div class="card"><h2>5 · PURGA DE LÍQUIDO DE LOS CILINDROS (indicadoras + slow turning)</h2>
+  <p class="hint">¿Qué pasa? Tras la tormenta puede haber agua o aceite dentro de un cilindro. Un líquido no se comprime: si el pistón sube y no tiene por dónde salir, la biela se dobla. Se abre una salida en cada culata (válvula indicadora) y se gira el motor despacio para empujar el líquido afuera.</p>
+  <p><b>A · Abrir las 6 indicadoras:</b> <span id="cyA"></span></p><div id="cocks"></div>
+  <p><b>B · Girar despacio</b> (el pistón empuja el líquido hacia afuera): <button id="bSlow2">Slow turning</button></p>
+  <p><b>C · Resultado del giro:</b> <span id="cyB">todavía no giraste</span></p>
+  <p><b>D · Cerrar las 6 indicadoras</b> cuando salga limpio: <span id="cyC"></span></p></div>
+</section>
+
+<section id="v2" class="hide">
+ <div class="card gs">
+  <div><canvas id="g0" width="100" height="100"></canvas><br>ACEITE (bar)</div>
+  <div><canvas id="g1" width="100" height="100"></canvas><br>TANQUE AIRE (bar)</div>
+  <div><canvas id="g2" width="100" height="100"></canvas><br>RPM</div>
+ </div>
+ <div class="grid">
+  <div class="card"><h2>3 · AIRE DE ARRANQUE</h2>
+   <p><span class="led" id="lAir"></span><button id="bAir">Válvula maestra: CERRADA</button></p>
+   <p><button id="bSlow">Slow turning (giro lento)</button></p></div>
+  <div class="card"><h2>5 · SECUENCIA FINAL</h2>
+   <p><span class="led" id="lGov"></span>Governor: <span id="govTxt"></span></p>
+   <input type="range" id="gov" min="0" max="100" value="60">
+   <p>Ralentí = zona 10–25 %</p>
+   <p><span class="led" id="lLev"></span><button id="bLev">Inyección aire: OFF</button></p></div>
+ </div>
+ <button id="start">▶ START</button>
+ <div class="card"><h2>7 · MANIOBRA: ACOPLAR LA HÉLICE Y ACELERAR</h2>
+  <p class="hint">Con el motor en ralentí la hélice no gira y el buque sigue sin avanzar. Acopla el embrague del eje de cola (en ralentí, para evitar un golpe de par) y luego sube el governor de a poco para dar empuje.</p>
+  <p><span class="led" id="lClu"></span><button id="bClutch">Embrague de hélice: DESACOPLADO</button></p>
+  <p>Velocidad del buque: <b id="spdT">0.0</b> nudos</p></div>
+</section>
+
+<div class="grid" style="margin-top:6px">
+ <div class="card"><h2>PROCEDIMIENTO</h2><ol id="cl">
+  <li>Sentina verificada + virador desacoplado</li><li>Pre-lube ≥ 1.5 bar</li><li>Aire ≥ 25 bar + válvula maestra</li>
+  <li>Purga FIP sin burbujas + MGO (≥ 6 bar)</li><li>Slow turning limpio + indicadoras cerradas</li><li>Governor ralentí + aire + START</li><li>Acoplar la hélice y acelerar de a poco hasta estar a salvo</li></ol></div>
+ <div class="card"><h2>REGISTRO</h2><div id="log">Black-out. Deriva hacia la costa. Arranca el motor.</div></div>
+</div>
+<div class="card"><h2>CONSOLA TÉCNICA · el porqué de cada acción</h2><div id="edu"></div></div>
+
+<div id="intro">
+ <div style="max-width:660px;width:100%; background:var(--panel); border:2px solid var(--steel); padding:16px; border-radius:4px;">
+  <div style="font-size:11px;color:var(--dim);margin-bottom:6px">MOTOR ROOM · LEE SHORE EMERGENCY · Comodoro Rivadavia</div>
+  <div id="introImgBox" style="width:100%; height:180px; border:2px solid var(--steel); background:#0c0e10; overflow:hidden; margin-bottom:6px; display:none; position:relative;">
+    <img id="introImg" src="" alt="Ilustración técnica" style="width:100%; height:100%; object-fit:cover; filter: contrast(1.05) brightness(0.95);" />
+  </div>
+  <svg id="inSvg" viewBox="0 0 600 220" style="width:100%;background:#0b1620;border:2px solid var(--steel);margin:6px 0"></svg>
+  <div id="inD" style="color:var(--ok)"></div>
+  <h2 id="inT" style="color:var(--warn);margin:6px 0"></h2>
+  <p id="inM" style="line-height:1.5;min-height:64px"></p>
+  <p><button id="inP">◀</button> <button id="inN"></button> <button id="inS">Saltar intro</button></p>
+ </div>
+</div>
+
+<div id="ov"><div><h2 id="ovT"></h2><p id="ovM"></p><button id="rs">Reintentar</button></div></div>
+
+<script>
+const T0=240, DIST0=1500, $=id=>document.getElementById(id);
+let S, view=1, last=performance.now();
+const gv=[{v:0},{v:0},{v:0}];
+
+function reset(){
+  S={t:T0,gear:true,bil:false,pump:false,oil:0,tank:30,air:false,cocks:Array(6).fill(false),
+     water:1+Math.floor(Math.random()*6),slowOk:false,busy:false,gov:60,lev:false,rpm:0,
+     ck:[0,0,0,0,0,0],over:false,run:false,mgo:false,clutch:false,v:0,safe:false,bleed:Array.from({length:6},()=>Math.random()<.4)};
+  if(!S.bleed.some(x=>x)) S.bleed[Math.floor(Math.random()*6)]=true; S.n0=S.bleed.filter(x=>x).length; $('gov').value=60; $('ov').classList.remove('show'); stopEngine(); msg('Black-out. Deriva hacia la costa. Arranca el motor.');
+}
+
+let AC,eng,engT0=0;
+function audio(){ if(AC) return; AC=new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain(); o.type='sine'; o.frequency.value=50; g.gain.value=.008; o.connect(g).connect(AC.destination); o.start(); }
+function beep(f,d,ty='triangle',v=.035){ if(!AC) return; const o=AC.createOscillator(),g=AC.createGain(); o.type=ty; o.frequency.value=f;
+  g.gain.setValueAtTime(v,AC.currentTime); g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d); o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+d); }
+function alarm(){ beep(880,.22); setTimeout(()=>beep(620,.22),240); setTimeout(()=>beep(880,.22),480); }
+function startEngine(){ if(!AC||eng) return; const o=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain(),l=AC.createOscillator(),lg=AC.createGain();
+  o.type='sawtooth'; f.type='lowpass'; f.frequency.value=220; g.gain.value=.12; l.frequency.value=14; lg.gain.value=.05;
+  l.connect(lg).connect(g.gain); o.connect(f).connect(g).connect(AC.destination); o.start(); l.start(); eng={o,g,l,f}; engT0=performance.now(); }
+function stopEngine(){ if(!eng) return; eng.o.stop(); eng.l.stop(); eng=null; }
+
+function msg(t,c=''){ const l=$('log'); l.textContent=t; l.className=c; }
+function pen(sec,t,crit){ tmsg=t; tUntil=performance.now()+8000; S.t-=sec; msg('⚠ '+t+' (−'+sec+'s)','bad'); document.body.classList.remove('alarm'); void document.body.offsetWidth; document.body.classList.add('alarm'); alarm(); }
+function fail(title,m){ if(S.over) return; S.over=true; alarm(); $('ovT').textContent='✖ '+title; $('ovT').style.color='var(--crit)'; $('ovM').textContent=m; $('ov').classList.add('show'); }
+function win(){ S.over=true; $('ovT').textContent='✔ MOTOR EN MARCHA'; $('ovT').style.color='var(--ok)';
+  $('ovM').textContent='Propulsión recuperada con '+Math.max(0,S.t).toFixed(0)+' s de margen. El buque se aleja de la costa.'; $('ov').classList.add('show'); }
+
+$('bBil').onclick=()=>{ audio(); S.bil=true; beep(500,.1,'sine'); msg('Sentina inspeccionada: nivel normal, sin agua en el cárter.','good'); };
+$('bGear').onclick=()=>{ audio(); if(S.over||S.run) return;
+  if(S.gear){ if(!S.bil) return pen(5,'Verifica la sentina antes de desacoplar el virador.');
+    S.gear=false; S.ck[0]=1; beep(300,.15,'sawtooth'); msg('Virador desacoplado.','good'); }
+  else { S.gear=true; msg('Virador acoplado de nuevo.'); } };
+$('bPump').onclick=()=>{ audio(); if(S.over||S.run) return;
+  if(S.gear&&!S.pump) return pen(5,'Orden incorrecto: desacopla el virador antes del pre-lube.');
+  S.pump=!S.pump; beep(250,.1,'sine'); msg(S.pump?'Bomba de pre-lube en marcha. Observa el manómetro en el panel LOP.':'Bomba detenida.'); };
+$('bAir').onclick=()=>{ audio(); if(S.over||S.run) return;
+  if(!S.air){
+    if(!(S.pump&&S.oil>=1.5)) return pen(10,'Orden incorrecto: espera presión de aceite ≥ 1.5 bar.');
+    if(S.tank<25) return pen(5,'Tanque de aire bajo 25 bar: no se puede arrancar con seguridad.');
+    S.air=true; S.ck[2]=1; beep(180,.2,'sawtooth'); msg('Válvula maestra de aire abierta.','good');
+  } else { S.air=false; msg('Válvula maestra cerrada.'); } };
+
+function buildCocks(){ const c=$('cocks'); for(let i=0;i<6;i++){ const b=document.createElement('button'); b.className='cock'; b.id='c'+i;
+  b.innerHTML='CIL '+(i+1)+'<i class="spray" id="sp'+i+'"></i>'; b.onclick=()=>toggleCock(i); c.appendChild(b); } }
+function toggleCock(i){ audio(); if(S.over||S.run||S.busy) return;
+  if(!S.air) return pen(5,'Orden incorrecto: abre primero el aire de arranque.');
+  if(!fuelOK()) return pen(5,'Orden incorrecto: purga las FIP y cambia a MGO (paso 4) antes de las indicadoras.');
+  S.cocks[i]=!S.cocks[i]; beep(420,.06,'square');
+  if(S.slowOk&&S.cocks.every(x=>!x)){ S.ck[4]=1; msg('Indicadoras cerradas. Listo para secuencia final.','good'); } }
+
+$('bSlow').onclick=()=>{ audio(); if(S.over||S.run||S.busy) return;
+  if(S.gear) return pen(30,'TURNING GEAR ENGAGED - CRITICAL OVERLOAD');
+  if(!(S.pump&&S.oil>=1.5)) return fail('FALLO DE COJINETES','Giro sin presión de aceite: los cojinetes se gripan.');
+  if(!S.air) return pen(10,'Sin aire para el giro lento.');
+  if(S.cocks.some(x=>!x)) return pen(5,'Abre las 6 válvulas de indicador antes del giro lento.');
+  S.busy=true; S.slowOk=false; S.tank-=2; msg('Slow turning… observa las culatas.');
+  const w=S.water; if(w>0) $('sp'+(w-1)).classList.add('go');
+  setTimeout(()=>{ S.busy=false; document.querySelectorAll('.spray').forEach(e=>e.classList.remove('go'));
+    if(w>0){ S.water=0; S.lastTurn=w; pen(10,'¡LÍQUIDO en culata '+w+'! Drenado. Repite el giro lento para confirmar.'); }
+    else { S.slowOk=true; S.lastTurn='ok'; msg('Sin líquido en las 6 culatas. Cierra las indicadoras.','good'); } },4000); };
+
+$('gov').oninput=e=>{ S.gov=+e.target.value; };
+$('bLev').onclick=()=>{ audio(); if(S.over||S.run) return; S.lev=!S.lev; beep(350,.08,'square'); };
+
+$('start').onclick=()=>{ audio(); if(S.over||S.run||S.busy) return;
+  if(S.gear) return pen(30,'TURNING GEAR ENGAGED - CRITICAL OVERLOAD');
+  if(!(S.pump&&S.oil>=1.5)) return fail('FALLO DE COJINETES','Arranque sin presión de aceite suficiente.');
+  if(!S.air) return pen(10,'SIN AIRE: válvula maestra cerrada.');
+  if(S.bleed.some(x=>x)){ S.tank-=2; return pen(25,'AIR LOCK: los inyectores no levantan (<1000 bar). Purga las FIP.'); }
+  if(!S.mgo){ S.tank-=2; return pen(15,'HFO frío: mala atomización, no hay autoignición. Cambia a MGO.'); }
+  if(!S.slowOk){ if(S.water>0) return fail('GOLPE DE ARIETE','Líquido en un cilindro: biela doblada y culata destruida. Faltó el slow turning.');
+    return pen(20,'Slow turning no confirmado: repítelo antes de arrancar.'); }
+  if(S.cocks.some(x=>x)) return pen(20,'LLAMARADA por las indicadoras abiertas. Ciérralas.');
+  if(S.gov<10||S.gov>25) return pen(15,'Governor fuera de ralentí (10–25 %).');
+  if(!S.lev) return pen(10,'Falta accionar la inyección de aire de arranque.');
+  S.tank-=4; S.run=true; S.ck[5]=1; startEngine(); msg('¡Ignición! Motor acelerando…','good'); setTimeout(()=>{ if(S.run) edu('Motor estable en ralentí. Observa el ciclo p-V y el corte del cilindro; ahora acopla la hélice con el embrague para dejar de derivar.'); },2500); };
+
+$('rs').onclick=reset;
+function show(n){ return; view=n; $('v1').classList.toggle('hide',n!==1); $('v2').classList.toggle('hide',n!==2); $('n1').classList.toggle('sel',n===1); $('n2').classList.toggle('sel',n===2); }
+$('n1').onclick=()=>show(1); $('n2').onclick=()=>show(2);
+addEventListener('keydown',e=>{ if(e.key==='1')show(1); if(e.key==='2')show(2); });
+
+function gauge(i,val,max,g0,g1){ const c=$('g'+i).getContext('2d'); const o=gv[i]; o.v+=(val-o.v)*.12; const cx=50,cy=54,r=38;
+  c.clearRect(0,0,100,100); const A=a=>(135+270*a/max)*Math.PI/180;
+  c.lineWidth=5; c.strokeStyle='#444'; c.beginPath(); c.arc(cx,cy,r,A(0),A(max)); c.stroke();
+  c.strokeStyle='#3ddc6a'; c.beginPath(); c.arc(cx,cy,r,A(g0),A(g1)); c.stroke();
+  c.strokeStyle='#cfd3d6'; c.lineWidth=1; for(let k=0;k<=10;k++){ const a=A(max*k/10); c.beginPath(); c.moveTo(cx+Math.cos(a)*(r-8),cy+Math.sin(a)*(r-8)); c.lineTo(cx+Math.cos(a)*(r-3),cy+Math.sin(a)*(r-3)); c.stroke(); }
+  const a=A(Math.min(max,Math.max(0,o.v))); c.strokeStyle='#ff3b3b'; c.lineWidth=2; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+Math.cos(a)*(r-6),cy+Math.sin(a)*(r-6)); c.stroke();
+  c.fillStyle='#ffc83d'; c.fillRect(cx-3,cy-3,6,6); c.fillStyle='#cfd3d6'; c.font='10px monospace'; c.fillText(o.v.toFixed(1),cx-12,92); }
+
+function tick(now){ const dt=Math.min(.1,(now-last)/1000); last=now;
+  if(!S.over&&!paused){ S.t=Math.min(T0,S.t+(S.run?S.v*dt:-dt)); S.v+=(((S.run&&S.clutch)?Math.max(0,S.rpm-30)*.12:0)-S.v)*dt*.35;
+    if(S.run&&S.clutch&&S.t>=T0*.85&&!S.safe){ S.safe=true; S.ck[6]=1; msg('¡Buque a salvo, lejos de las rocas!','good'); edu('Propulsión efectiva = motor + embrague acoplado + carga progresiva: el empuje de la hélice vence al viento y a la mar.'); }
+    S.oil=Math.max(0,Math.min(2.4,S.oil+(S.pump?.4:-.6)*dt));
+    if(S.oil>=1.5&&S.pump) S.ck[1]=1;
+    if(S.air&&fuelOK()) S.ck[3]=1;
+    if(S.run) S.rpm+=((S.gov<=25?60:60+(S.gov-25)*.8)-S.rpm)*dt*1.2; else S.rpm=S.busy?12:Math.max(0,S.rpm-dt*40);
+    if(S.tank<6&&!S.run) fail('SIN AIRE','Tanques agotados: no es posible arrancar. El buque es arrastrado a la costa.');
+    if(S.t<=0&&!S.run){ S.t=0; fail('VARADA EN LEE SHORE','El buque tocó las rocas con el motor parado.'); } }
+  if(eng){ eng.o.frequency.value=22+S.rpm*.4; const k=Math.exp(-(performance.now()-engT0)/3500); eng.g.gain.value=.035+.16*k; eng.f.frequency.value=110+S.rpm*1.5+260*k; eng.l.frequency.value=4+S.rpm*.18; }
+  let ph='BLACKOUT'; if(S.run) ph='RUNNING'; else if(S.over) ph='FAILED'; else if(S.slowOk&&S.cocks.every(x=>!x)) ph='CLEAR';
+  else if(S.air&&fuelOK()) ph='FUEL_OK'; else if(S.air) ph='AIR_OK'; else if(S.pump&&S.oil>=1.5) ph='LUBE_OK'; else if(!S.gear) ph='GEAR_OFF';
+  $('st').textContent=ph;
+  const t=Math.max(0,S.t); $('tm').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0'); $('tm').className=t<60?'low':'';
+  const d=DIST0*t/T0; $('dist').textContent=Math.round(d)+' m a la costa'; $('ship').style.left=(2+(1-t/T0)*70)+'%';
+  $('lBil').className='led'+(S.bil?' on':''); $('lGear').className='led '+(S.gear?'crit':'on');
+  $('bGear').textContent='Virador: '+(S.gear?'ACOPLADO':'DESACOPLADO');
+  $('lPump').className='led'+(S.pump?(S.oil>=1.5?' on':' warn'):''); $('bPump').textContent='Bomba: '+(S.pump?'ON':'OFF'); $('bPump').classList.toggle('on',S.pump);
+  $('oilTxt').textContent=S.oil.toFixed(1);
+  $('lAir').className='led'+(S.air?' on':''); $('bAir').textContent='Válvula maestra: '+(S.air?'ABIERTA':'CERRADA'); $('bAir').classList.toggle('on',S.air);
+  const inG=S.gov>=10&&S.gov<=25; $('govTxt').textContent=S.gov+' %'; $('lGov').className='led'+(inG?' on':' warn');
+  $('lLev').className='led'+(S.lev?' on':''); $('bLev').textContent='Inyección aire: '+(S.lev?'ON':'OFF'); $('bLev').classList.toggle('on',S.lev);
+  S.cocks.forEach((o,i)=>$('c'+i).classList.toggle('open',o));
+  S.bleed.forEach((a,i)=>{ const f=$('f'+i); f.textContent='FIP '+(i+1)+(a?'\n◦ ◦ AIRE\n[PURGAR]':'\n━ combust.\n✓ OK'); f.classList.toggle('open',!a); });
+  const rem=S.bleed.filter(x=>x).length; $('fpTxt').textContent=(7-1.8*rem-(S.mgo?0:1.5)).toFixed(1);
+  $('fpB').style.width=(S.n0?(S.n0-rem)/S.n0*100:0)+'%'; $('fpS').textContent=rem?'Purgadas '+(S.n0-rem)+' de '+S.n0+' bombas con aire. Faltan las que están en rojo.':'✓ Todas las bombas purgadas: combustible sin aire.';
+  const nO=S.cocks.filter(x=>x).length, lt=S.lastTurn; $('cyA').textContent=nO+'/6 abiertas'; $('cyC').textContent=(6-nO)+'/6 cerradas';
+  $('cyB').textContent=S.busy?'girando… mira las culatas en el diagrama':lt===undefined?'todavía no giraste':lt==='ok'?'✅ sin líquido: ya puedes cerrar las indicadoras':'💧 salió líquido del cilindro '+lt+' (ya drenado). Repite el giro hasta que salga limpio.';
+  $('bMgo').textContent='Selector: '+(S.mgo?'MGO':'HFO'); $('bMgo').classList.toggle('on',S.mgo);
+  $('bClutch').textContent='Embrague de hélice: '+(S.clutch?'ACOPLADO':'DESACOPLADO'); $('bClutch').classList.toggle('on',S.clutch); $('lClu').className='led'+(S.clutch?' on':(S.run?' warn':'')); $('spdT').textContent=(S.v*1.5).toFixed(1);
+  document.querySelectorAll('#cl li').forEach((li,i)=>li.classList.toggle('done',!!S.ck[i]));
+  guide(); drawEng(dt); drawZoom(dt); drawShip();
+  { gauge(0,S.oil*(S.run?1:1)+ (S.pump?Math.random()*.05:0),6,1.5,4); gauge(1,S.tank,40,25,40); gauge(2,S.rpm,120,40,80); }
+  requestAnimationFrame(tick); }
+
+let ang=0, dash=0;
+function buildEng(){
+  let h='<path id="man" d="M60 105H100V34H470" fill="none" stroke="#444" stroke-width="6"/><g id="stubs" stroke="#444" stroke-width="3">';
+  for(let i=0;i<6;i++) h+=`<line x1="${138+i*55}" y1="34" x2="${138+i*55}" y2="62"/>`;
+  h+='</g><rect x="10" y="62" width="50" height="88" fill="#111" stroke="#889"/><rect id="tkF" x="12" y="100" width="46" height="46"/><text x="14" y="58">TANQUE AIRE</text>'
+   +'<g class="clk" onclick="$(\'bAir\').onclick()"><polygon id="vlv" points="72,95 72,115 98,95 98,115" fill="#ff3b3b" stroke="#ccc"/></g><text x="62" y="130">V. MAESTRA</text>'
+   +'<rect x="115" y="150" width="360" height="22" fill="#2a2e33" stroke="#555"/><line x1="115" y1="161" x2="500" y2="161" stroke="#889" stroke-width="4"/>';
+  for(let i=0;i<6;i++){ const x=130+i*55;
+    h+=`<rect id="cy${i}" x="${x}" y="62" width="40" height="88" fill="#1a1d21" stroke="#667"/><rect id="hd${i}" x="${x}" y="62" width="40" height="20" fill="#2a2a2a"/>`
+     +`<rect id="pi${i}" x="${x+3}" y="100" width="34" height="14" fill="#9aa0a6"/><line id="rod${i}" x1="${x+20}" y1="110" x2="${x+20}" y2="150" stroke="#cfd3d6" stroke-width="3"/><circle cx="${x+20}" cy="161" r="12" fill="none" stroke="#667"/><text x="${x+13}" y="146">CIL ${i+1}</text>`
+     +`<path id="sx${i}" d="M${x+20} 52L${x+36} 40M${x+20} 52L${x+4} 40M${x+20} 52V36" stroke="#6cc4ff" stroke-width="3" stroke-dasharray="3 2" opacity="0"/>`
+     +`<circle id="ck${i}" class="clk" cx="${x+20}" cy="56" r="7" fill="#3a4047" stroke="#ccc" onclick="toggleCock(${i})"/>`; }
+  h+='<path id="oil" d="M350 200H384M406 200H490V172H120" fill="none" stroke="#ffc83d" stroke-width="4" stroke-dasharray="8 6" opacity=".2"/>'
+   +'<rect x="150" y="186" width="200" height="30" fill="#3a2c12" stroke="#665"/><text x="210" y="205">CÁRTER / ACEITE</text>'
+   +'<circle id="pmp" class="clk" cx="395" cy="200" r="11" fill="#3a4047" stroke="#ccc" onclick="$(\'bPump\').onclick()"/><text x="392" y="203">P</text>'
+   +'<g id="fw"><circle cx="510" cy="140" r="40" fill="none" stroke="#889" stroke-width="5" stroke-dasharray="3 3"/><circle cx="510" cy="140" r="36" fill="#2a2e33" stroke="#889"/>'
+   +'<line x1="510" y1="108" x2="510" y2="172" stroke="#667" stroke-width="3"/><line x1="478" y1="140" x2="542" y2="140" stroke="#667" stroke-width="3"/><circle cx="510" cy="112" r="4" fill="#ff3b3b"/></g>'
+   +'<g id="tg" class="clk" onclick="$(\'bGear\').onclick()"><circle id="tgc" r="14" fill="#ff3b3b" stroke="#222" stroke-width="3" stroke-dasharray="3 2"/><circle r="6" fill="#222"/></g><text id="tgT" x="540" y="50">VIRADOR</text>'
+   +'<text x="10" y="164">GOVERNOR (ralentí 10–25%)</text><rect x="10" y="168" width="100" height="10" fill="#111" stroke="#667"/><rect x="20" y="168" width="15" height="10" fill="#3ddc6a" opacity=".5"/><rect id="gvb" x="10" y="166" width="3" height="14" fill="#ffc83d"/>'
+   +'<g class="clk" onclick="$(\'bBil\').onclick()"><rect id="bil" x="10" y="190" width="100" height="24" fill="#3a4047" stroke="#ccc"/></g><text x="38" y="206">SENTINA</text><text id="rpmT" x="480" y="200">0 RPM</text>';
+  $('eng').innerHTML=h; }
+function drawEng(dt){
+  ang+=(S.rpm>1?S.rpm*6:(S.busy?70:0))*dt; dash+=(S.pump?40:0)*dt;
+  for(let i=0;i<6;i++){ const th=(ang+[0,240,120,300,60,180][i])*Math.PI/180, s=Math.cos(th), yp=161-(12*s+Math.sqrt(1936-144*Math.sin(th)**2)), cx=150+i*55, w=S.busy&&S.water===i+1, a=(k,v)=>$(k+i).setAttribute(...v);
+    a('pi',['y',yp-7]); const R=$('rod'+i); R.setAttribute('y1',yp); R.setAttribute('x2',cx+12*Math.sin(th)); R.setAttribute('y2',161-12*s); a('hd',['fill',S.run?(s>.85?'#ffcf5a':'#6a2a1a'):'#2a2a2a']); a('cy',['fill',w?'#1a3a55':'#1a1d21']);
+    a('ck',['fill',S.cocks[i]?'#ffc83d':'#3a4047']); a('sx',['opacity',S.cocks[i]&&w?1:(S.cocks[i]&&S.busy?.35:0)]); }
+  $('fw').setAttribute('transform','rotate('+ang+' 510 140)');
+  $('tg').setAttribute('transform','translate(510,'+(S.gear?88:58)+') rotate('+(-ang*2.7)+')');
+  $('tgc').setAttribute('fill',S.gear?'#ff3b3b':'#3ddc6a'); $('tgT').textContent='VIRADOR: '+(S.gear?'ACOPLADO':'LIBRE');
+  const th=S.tank/40*84, T=$('tkF'); T.setAttribute('y',148-th); T.setAttribute('height',th); T.setAttribute('fill',S.tank>=25?'#3ddc6a':'#ffc83d');
+  const ac=S.air?'#6cc4ff':'#444'; $('man').setAttribute('stroke',ac); $('stubs').setAttribute('stroke',ac); $('vlv').setAttribute('fill',S.air?'#3ddc6a':'#ff3b3b');
+  const o=$('oil'); o.setAttribute('opacity',.2+S.oil/2.4*.8); o.setAttribute('stroke',S.oil>=1.5?'#ffc83d':'#9a6a2a'); o.setAttribute('stroke-dashoffset',-dash);
+  $('pmp').setAttribute('fill',S.pump?(S.oil>=1.5?'#3ddc6a':'#ffc83d'):'#3a4047');
+  $('gvb').setAttribute('x',10+S.gov*.97); $('bil').setAttribute('fill',S.bil?'#1f5a33':'#3a4047'); $('rpmT').textContent=Math.round(S.rpm)+' RPM'; }
+
+const fuelOK=()=>S.mgo&&!S.bleed.some(x=>x);
+function buildFips(){ const c=$('fips'); for(let i=0;i<6;i++){ const b=document.createElement('button'); b.className='cock'; b.id='f'+i; b.onclick=()=>bleedFIP(i); c.appendChild(b); } }
+function bleedFIP(i){ audio(); if(S.over||S.run) return;
+  if(!S.air) return pen(5,'Orden incorrecto: completa el aire de arranque (paso 3) antes de purgar.');
+  if(S.bleed[i]){ S.bleed[i]=false; beep(700,.08,'sine'); purgeFx(i); msg('FIP '+(i+1)+': purgada, sale combustible sin burbujas.','good');
+    edu('Air lock: el aire es compresible y absorbe el desplazamiento del émbolo de la FIP; la presión no llega a >1000 bar para abrir la aguja. Purgar elimina esas burbujas.'); }
+  else { S.t-=2; msg('FIP '+(i+1)+': ya estaba purgada (−2s).','bad'); } }
+$('bMgo').onclick=()=>{ audio(); if(S.over||S.run) return;
+  if(!S.air) return pen(5,'Orden incorrecto: completa el aire de arranque (paso 3) antes de cambiar combustible.');
+  S.mgo=!S.mgo; beep(300,.1,'square'); msg('Selector de combustible: '+(S.mgo?'MGO':'HFO')+'.'); };
+
+function edu(t,bad){ const e=$('edu'),p=document.createElement('p'); p.style.margin='3px 0'; p.style.color=bad?'var(--crit)':'var(--txt)';
+  p.textContent=(bad?'✖ ':'▸ ')+t; e.prepend(p); while(e.children.length>14) e.lastChild.remove(); }
+const EDU={
+ bBil:['Sentina/cárter: tras el temporal el agua emulsiona el aceite y destruye la película hidrodinámica del cojinete.'],
+ bGear:['Virador: motor eléctrico + reductor engranado en la corona del volante (~0.5 rpm, alto par). Debe quedar libre: el par del aire de arranque cizallaría sus dientes.','Verifica la sentina antes de actuar (paso 1).'],
+ bPump:['Pre-lube: con el eje parado no hay cuña de aceite (régimen límite). La bomba auxiliar crea ≥1.5 bar para separar muñón y cojinete.','Primero el virador (paso 1).'],
+ bAir:['Aire a ~30 bar: el 2T gira con aire comprimido admitido en la carrera de expansión. Con p·V=cte, el botellón da pocos arranques.','Necesitas aceite ≥1.5 bar y tanque ≥25 bar.'],
+ bMgo:['MGO: baja viscosidad (~3–6 cSt) y buena atomización en frío. El HFO requiere ~130 °C para pulverizar bien.','Abre antes el aire maestro (paso 3).'],
+ bSlow:['Slow turning: con indicadoras abiertas el pistón expulsa el líquido (incompresible). Cerradas, V→0 con fluido haría p→∞ y doblaría la biela.','Revisa: virador libre, aceite ≥1.5 bar, aire y las 6 indicadoras abiertas.'],
+ bLev:['Palanca de aire de arranque: el distribuidor neumático alimenta cada cilindro en su carrera de expansión.'],
+ start:['¡Combustión! 2T: barrido, compresión (T2=T1·rc^(γ−1) sobre la autoignición) e inyección >1000 bar.','Falta un requisito: revisa la consola y el procedimiento.']};
+for(const k in EDU){ const b=$(k), f=b.onclick; b.onclick=()=>{ if(S.over||S.run) return; const t=S.t; f(); if(S.over) return;
+  const bad=(t-S.t)>.5; edu(bad?(EDU[k][1]||EDU[k][0]):EDU[k][0],bad); }; }
+
+let paused=true, tmsg='', tUntil=0, gKey='', hint=false;
+const QS={
+ 'Paso 1/6 · Revisa la sentina':'¿Qué le pasaría al aceite si el cárter tiene agua tras el temporal? ¿Qué conviene revisar antes de mover el eje?',
+ 'Paso 1/6 · Desacopla el virador':'¿Qué elemento sigue engranado al volante y qué le pasaría al recibir el par del aire de arranque?',
+ 'Paso 2/6 · Enciende la bomba pre-lube':'Con el eje parado, ¿hay película de aceite en los cojinetes? ¿Qué equipo auxiliar la crea?',
+ 'Paso 2/6 · Espera la presión de aceite':'¿Qué indica la aguja del manómetro? ¿Ya llegó a la zona verde que separa muñón y cojinete?',
+ 'Paso 3/6 · Abre el aire de arranque':'¿Con qué energía gira el motor para arrancar? ¿Alcanza la presión del botellón y qué válvula la libera?',
+ 'Paso 4/6 · Purga el air lock':'El aire se comprime y el combustible no. ¿Qué pasa con la presión de la bomba si hay burbujas? ¿Qué FIP las muestran?',
+ 'Paso 4/6 · Cambia a MGO':'El HFO es muy viscoso en frío. ¿Qué combustible atomiza mejor en un arranque? ¿Qué presión debería verse?',
+ 'Paso 5/6 · Girando…':'Observa el diagrama: ¿en qué culata aparece líquido? ¿Por qué no puede comprimirse?',
+ 'Paso 5/6 · Abre las indicadoras':'Si un pistón comprime un líquido incompresible, ¿por dónde debería escapar? ¿Qué válvulas lo permiten?',
+ 'Paso 5/6 · Haz el slow turning':'¿Cómo comprobarías, sin riesgo, que no hay líquido en ningún cilindro antes de arrancar?',
+ 'Paso 5/6 · Cierra las indicadoras':'Ya salió el líquido. ¿Qué pasaría en la combustión si las indicadoras siguen abiertas?',
+ 'Paso 6/6 · Governor a ralentí':'¿A qué régimen conviene que arranque el motor: ralentí o plena carga? ¿Por qué?',
+ 'Paso 6/6 · Activa el aire de arranque':'¿Qué sistema envía aire a cada cilindro en su carrera de expansión para hacerlo girar?',
+ 'Paso 6/6 · ¡START!':'Repasa: virador, aceite, aire, combustible, líquido, governor. ¿Falta algo antes de pulsar START?'};
+$('gH').onclick=()=>{ hint=!hint; $('gM').classList.toggle('hide',!hint); };
+$('tech').onclick=()=>$('bub').classList.toggle('hide');
+function guide(){
+  const idx=(arr,f)=>arr.map((v,i)=>f(v)?i:-1).filter(i=>i>=0), closed=idx(S.cocks,o=>!o), openC=idx(S.cocks,o=>o), air=idx(S.bleed,a=>a);
+  let T,M,ids=[],tab=1;
+  if(S.run){ tab=0; if(S.safe){T='✔ Buque a salvo';M='Ya estás lejos de las rocas. Puedes seguir acelerando o parar el motor (primero desacopla la hélice).';}
+    else if(!S.clutch){T='Paso 7/8 · Acopla la hélice';M='Con el motor estable en ralentí, toca «Embrague de hélice»: así el motor mueve la hélice y el buque deja de derivar.';ids=['bClutch'];}
+    else {T='Paso 8/8 · Acelera con el governor';M='Sube el governor de a poco (ahora '+S.gov+' %): más carga, más empuje y más nudos.';ids=['gov'];} }
+  else if(S.over){T='Partida terminada';M='Pulsa Reintentar.';tab=0;}
+  else if(!S.bil){T='Paso 1/6 · Revisa la sentina';M='Toca «Inspeccionar sentina». Si hay agua en el cárter, el aceite pierde capacidad de lubricar.';ids=['bBil'];}
+  else if(S.gear){T='Paso 1/6 · Desacopla el virador';M='Toca «Virador: ACOPLADO». Si queda engranado, el arranque rompe sus dientes.';ids=['bGear'];}
+  else if(!S.pump){T='Paso 2/6 · Enciende la bomba pre-lube';M='Toca «Bomba: OFF». Crea presión de aceite antes de girar el eje.';ids=['bPump'];}
+  else if(S.oil<1.5){T='Paso 2/6 · Espera la presión de aceite';M='Sube '+S.oil.toFixed(1)+' / 1.5 bar. No toques nada: espera a que la aguja llegue a la zona verde.';tab=0;}
+  else if(!S.air){T='Paso 3/6 · Abre el aire de arranque';M='Verifica en el panel LOP que el tanque tenga ≥ 25 bar (ahora '+S.tank.toFixed(0)+') y toca «Válvula maestra».';ids=['bAir'];tab=2;}
+  else if(air.length){T='Paso 4/6 · Purga el air lock ('+air.length+' FIP con aire)';M='El aire atrapado impide llegar a >1000 bar. Toca cada FIP en rojo («◦◦ AIRE») hasta que todas queden verdes.';ids=air.map(i=>'f'+i);}
+  else if(!S.mgo){T='Paso 4/6 · Cambia a MGO';M='Toca «Selector: HFO». El MGO es fluido y atomiza bien en frío; la presión debe quedar ≥ 6 bar.';ids=['bMgo'];}
+  else if(!S.slowOk&&S.busy){T='Paso 5/6 · Girando…';M='Observa el diagrama: la culata azul con chorro tiene líquido.';tab=0;}
+  else if(!S.slowOk&&closed.length){T='Paso 5/6 · Abre las indicadoras ('+closed.length+' cerradas)';M='Toca cada CIL cerrado. Abiertas, dejan salir el líquido durante el giro lento.';ids=closed.map(i=>'c'+i);}
+  else if(!S.slowOk){T='Paso 5/6 · Haz el slow turning';M='Pulsa «Slow turning» (botón de la tarjeta 5 de Inspección, o en el panel LOP). Si sale líquido, repítelo hasta que salga limpio.';ids=['bSlow2'];tab=1;}
+  else if(openC.length){T='Paso 5/6 · Cierra las indicadoras ('+openC.length+' abiertas)';M='Ya no hay líquido. Ciérralas: con la combustión saldría llama por ellas.';ids=openC.map(i=>'c'+i);}
+  else if(S.gov<10||S.gov>25){T='Paso 6/6 · Governor a ralentí';M='Mueve el deslizador a 10–25 % (ahora '+S.gov+' %).';ids=['gov'];tab=2;}
+  else if(!S.lev){T='Paso 6/6 · Activa el aire de arranque';M='Toca «Inyección aire: OFF».';ids=['bLev'];tab=2;}
+  else {T='Paso 6/6 · ¡START!';M='Todo listo. Pulsa START.';ids=['start'];tab=2;}
+  const go=false;
+  const key=T.replace(/\(.*\)/,'').trim(); if(key!==gKey){ gKey=key; hint=false; $('gM').classList.add('hide'); }
+  $('gT').textContent=' '+(/^Paso/.test(T)?T.slice(0,8):T);
+  $('gQ').textContent=(performance.now()<tUntil?'⚠ '+tmsg+' — ¿Qué requisito te faltó? ':'')+(QS[key]||'');
+  $('gM').textContent='👉 '+(T.split('· ')[1]||T)+': '+M;
+  $('gH').textContent=hint?'🙈 Ocultar pista':'💡 Pista';
+  document.querySelectorAll('.hl').forEach(e=>e.classList.remove('hl'));
+  if(hint){ if(go) $('n'+tab).classList.add('hl'); else ids.forEach(id=>$(id).classList.add('hl')); }
+}
+
+const STORY=[
+  ['Golfo San Jorge · Comodoro Rivadavia', 'Es de noche frente a Comodoro Rivadavia. Un temporal del sudeste (sudestada) con olas de 9 m golpea al buque mercante. Entró agua por las ventilaciones y aire en las líneas de combustible.', 'Gemini_Generated_Image_cprh7bcprh7bcprh.jpg'],
+  ['El apagón', 'Un cortocircuito dejó la sala de máquinas sin energía y el motor principal se paró de emergencia. Sin propulsión, el viento y la mar empujan al buque hacia la costa de acantilados.', '1.jpg'],
+  ['Paso 1 y 2 · Sentina y Pre-lube', 'Revisa la sentina (agua en el cárter arruina el aceite) y enciende la bomba pre-lube esperando al menos 1.5 bar en el manómetro antes de mover el eje.', '2.jpg'],
+  ['Paso 3 y 4 · Aire y Combustible', 'Abre la válvula maestra de aire a 30 bar. Purga el air lock de las bombas FIP y cambia a MGO para que el motor en frío logre la autoignición.', '3.jpg'],
+  ['Paso 5 · Limpieza de cilindros', 'Abre las 6 válvulas indicadoras y realiza un slow turning (giro lento). Si hay líquido incompresible, saldrá expulsado evitando doblar una biela.', '4.jpg'],
+  ['Paso 6 y Salvamento · ¡Arranque!', 'Coloca el governor en ralentí, acciona el aire de arranque y pulsa START. Acopla la hélice con el embrague y acelera de a poco para alejarte de la costa.', '5.jpg']
+];
+
+const E=(a,b,c,d,f,s,o=1)=>`<rect x="${a}" y="${b}" width="${c}" height="${d}" fill="${f}" opacity="${o}"${s?` stroke="${s}"`:''}/>`,
+ C=(x,y,r,f,o=1)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" opacity="${o}"/>`,
+ X=(x,y,s,f='#cfd3d6',z=11)=>`<text x="${x}" y="${y}" fill="${f}" font-size="${z}" font-family="monospace">${s}</text>`,
+ clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)), BG='<rect width="600" height="220" fill="#0b1620"/>';
+const seaI=(t,y=150)=>{ let w='M0 220L0 '+y; for(let x=0;x<=600;x+=20) w+='L'+x+' '+(y+Math.sin(x/30+t*2)*4); return `<path d="${w}L600 220Z" fill="#14394f"/>`; };
+const rainI=t=>{ let d=''; for(let i=0;i<30;i++) d+='M'+((i*41+t*160)%600)+' '+((i*67+t*400)%170)+'l-5 12'; return `<path d="${d}" stroke="#8ab" opacity=".45"/>`; };
+const shipI=(x,y,r)=>`<g transform="translate(${x},${y}) rotate(${r} 55 0)"><polygon points="0,0 110,0 124,-8 108,28 8,28" fill="#3a3f46" stroke="#778"/>`+E(8,-26,34,26,'#8a9097')+E(28,-44,9,18,'#aa3a2a')+E(50,-14,22,14,'#8a5a3b')+E(74,-14,22,14,'#3b6a8a')+'</g>';
+const coastI=t=>`<polygon points="470,220 470,135 500,100 535,118 565,75 600,88 600,220" fill="#4a3a2a"/>`+E(561,40,8,36,'#e8e8e8')+E(561,50,8,6,'#c33')+C(565,36,4,'#ffd25a')+`<polygon points="565,36 250,${46+Math.sin(t*1.5)*40} 250,${66+Math.sin(t*1.5)*40}" fill="#ffe9a0" opacity="${.05+Math.max(0,Math.cos(t*1.5))*.25}"/>`;
+const engI=(t,sp,ex='')=>{ let g=''; for(let i=0;i<6;i++){ const x=130+i*52, p=92+Math.sin(t*sp+i*1.9)*14; g+=E(x,60,38,80,'#1a1d21','#667')+E(x+3,p,32,12,'#9aa0a6')+E(x+17,p+12,4,50,'#889'); }
+  return E(100,50,400,110,'#12161a','#334')+g+E(120,150,370,18,'#2a2e33')+`<g transform="rotate(${t*sp*57} 540 118)">`+C(540,118,34,'#2a2e33')+'<line x1="540" y1="84" x2="540" y2="152" stroke="#778" stroke-width="3"/><line x1="506" y1="118" x2="574" y2="118" stroke="#778" stroke-width="3"/></g>'+ex; };
+
+const SCN=[
+ t=>BG+seaI(t)+coastI(t)+shipI(120,128,Math.sin(t*1.7)*4)+rainI(t)+X(14,18,'GOLFO SAN JORGE · frente a Comodoro Rivadavia','#fff')+X(14,34,'sudestada · olas de 9 m','#ffc83d')+X(470,206,'faro · acantilados'),
+ t=>BG+seaI(t)+coastI(t)+shipI(100+t*28,126,Math.sin(t*1.7)*4)+rainI(t)+(Math.sin(t*6)>0?X(14,24,'⚠ BLACK-OUT · MOTOR PARADO','#ff3b3b',14):'')+X(14,44,'Costa a '+Math.max(0,Math.round(1500-t*160))+' m · a la deriva','#fff'),
+ t=>BG+engI(t,0,X(110,40,'SALA DE MÁQUINAS · motor diésel 2 tiempos','#ffc83d'))+['1 Virador','2 Pre-lube','3 Aire','4 Combustible','5 Cilindros','6 START'].map((s,k)=>t>k*.7?X(14+k*98,206,s,'#3ddc6a',10):'').join(''),
+ t=>{ const gy=78-clamp(t-2.5)*50, ok=t>3.2; return BG+engI(t,0,`<g transform="translate(540,${gy}) rotate(${t*60})"><circle r="15" fill="${ok?'#3ddc6a':'#ff3b3b'}" stroke="#222" stroke-width="3" stroke-dasharray="3 2"/><circle r="5" fill="#222"/></g>`+E(120,176,370,30,'#14394f','#334')+C(260,178+(t*30)%24,3,'#6cc4ff')+X(130,196,t>1.2?'SENTINA ✔ sin agua en el cárter':'Revisando la sentina…','#cfd3d6',10))+X(14,24,ok?'VIRADOR DESACOPLADO ✔':'VIRADOR ACOPLADO ✗ (engrana en el volante)',ok?'#3ddc6a':'#ff3b3b',13); },
+ t=>{ const v=Math.min(2.2,t*.4), cx=56, cy=110, an=a=>(135+270*a/6)*Math.PI/180, pt=(a,r)=>[cx+Math.cos(an(a))*r,cy+Math.sin(an(a))*r], p1=pt(1.5,34), p2=pt(4,34), n=pt(v,28);
+   return BG+engI(t,0,`<path d="M312 186H480V150" stroke="#ffc83d" stroke-width="4" fill="none" stroke-dasharray="8 6" stroke-dashoffset="${-t*40}"/>`+C(300,186,13,v>=1.5?'#3ddc6a':'#ffc83d')+X(270,210,'bomba pre-lube','#cfd3d6',10))+`<circle cx="${cx}" cy="${cy}" r="40" fill="#0c0e10" stroke="#556"/><path d="M${p1[0]} ${p1[1]}A34 34 0 0 1 ${p2[0]} ${p2[1]}" stroke="#3ddc6a" stroke-width="5" fill="none"/><line x1="${cx}" y1="${cy}" x2="${n[0]}" y2="${n[1]}" stroke="#ff3b3b" stroke-width="3"/>`+X(14,170,'Presión: '+v.toFixed(1)+' bar',v>=1.5?'#3ddc6a':'#ffc83d',11)+X(14,184,v>=1.5?'✔ zona verde':'esperando…',v>=1.5?'#3ddc6a':'#cfd3d6',10)+X(14,24,'2 · PRE-LUBE: sube la presión de aceite','#fff',13); },
+ t=>{ const on=t>1.5; return BG+engI(t,on&&t>3?1:0,E(14,60,40,110,'#111','#889')+E(16,90,36,78,'#3ddc6a',null,.8)+`<polygon points="60,100 60,124 86,100 86,124" fill="${on?'#3ddc6a':'#ff3b3b'}" stroke="#ccc"/><path d="M54 112H98V44H500" stroke="${on?'#6cc4ff':'#555'}" stroke-width="5" fill="none" stroke-dasharray="7 6" stroke-dashoffset="${on?-t*50:0}"/>`+X(14,186,'tanque ~30 bar','#cfd3d6',10)+X(54,138,'maestra','#cfd3d6',9))+X(14,24,on?'3 · VÁLVULA MAESTRA ABIERTA ✔ el aire llega a las culatas':'3 · Aire a ~30 bar: hay que abrir la válvula maestra','#fff',13); }];
+
+let sp=0, t0=0, loopOn=false;
+function story(){ 
+  $('inT').textContent = STORY[sp][0];$('inM').textContent = STORY[sp][1]; 
+  
+  const imgBox = $('introImgBox');
+  const imgEl = $('introImg');
+  const svgEl = $('inSvg');
+
+  if (STORY[sp][2]) {
+    imgEl.src = STORY[sp][2];
+    imgBox.style.display = 'block';
+    svgEl.style.height = '100px'; 
+  } else {
+    imgBox.style.display = 'none';
+    svgEl.style.height = '220px';
+  }
+
+  $('inN').textContent = sp < STORY.length - 1 ? 'Siguiente ▶' : '▶ Comenzar guardia'; 
+  $('inD').textContent = STORY.map((_, i) => i === sp ? '●' : '○').join(' ');
+  t0 = performance.now(); 
+  if (!loopOn) { loopOn = true; requestAnimationFrame(introLoop); } 
+}
+
+function introLoop(now){ 
+  if($('intro').style.display==='none'){ loopOn=false; return; } 
+  const t=Math.max(0,(now-t0)/1000); 
+  const scnIdx = Math.min(sp, SCN.length - 1);
+  $('inSvg').innerHTML=SCN[scnIdx](t);
+  if(t>9.5 && sp < STORY.length - 1){ sp++; story(); } 
+  requestAnimationFrame(introLoop); 
+}
+
+$('inP').onclick=()=>{ if(sp>0){ sp--; story(); } };
+function endIntro(){ $('intro').style.display='none'; paused=false; audio(); }
+$('inN').onclick=()=>{ if(++sp < STORY.length) story(); else endIntro(); };$('inS').onclick=endIntro;
+
+$('v1').before($('g0').closest('.card'));
+let muted=false;
+$('mu').onclick=()=>{ audio(); muted=!muted; if(muted) AC.suspend(); else AC.resume();$('mu').textContent=muted?'🔇':'🔊'; };
+$('g0').closest('.card').after($('zs').closest('.card'));
+
+let selCyl=0, fl=0; const PHs=[0,240,120,300,60,180], D=Math.PI/180, R_=22, L_=80;
+const gx=t=>R_*Math.cos(t)+Math.sqrt(L_*L_-R_*R_*Math.sin(t)**2), VOL=t=>1+13*(R_+L_-gx(t))/(2*R_);
+function pcyl(d,run){ const V=VOL(d*D),V2=VOL(240*D),pc=3*Math.pow(V2/V,1.35);
+  if(d>=240) return pc; if(d<=120) return run?3*Math.pow(V2,1.35)*1.5*Math.pow(1/V,1.3):pc; return 2; }
+function drawZoom(dt){
+  fl+=dt*60; sfxTick(dt);
+  const fa=(id,on,col)=>{ const e=$(id); e.setAttribute('stroke-dasharray',on?'6 6':'none'); e.setAttribute('stroke-dashoffset',-fl); if(col) e.setAttribute('stroke',col); };
+  fa('man',S.air); fa('stubs',S.air);
+  const rem=S.bleed.some(x=>x); fa('frail',S.mgo||true,S.mgo?(rem?'#ff7b3b':'#ffd25a'):'#a0722a'); $('frail').setAttribute('stroke-dashoffset',-fl*(S.mgo&&!rem?1:.25));
+  $('ftT').textContent=S.mgo?'MGO':'HFO'; $('cluB').setAttribute('x',S.clutch?562:574); $('cluB').setAttribute('fill',S.clutch?'#3ddc6a':'#ff3b3b'); $('cluS').setAttribute('x1',S.clutch?569:581);
+  let fx=''; const pr=(x,y,k,col,sz)=>{ const f=((fl/30)+k*.33)%1; return `<circle cx="${x+Math.sin(f*7+k)*5}" cy="${y-f*26}" r="${sz*(.5+f)}" fill="${col}" opacity="${(1-f)*.6}"/>`; };
+  if(S.busy) for(let i=0;i<6;i++) if(S.cocks[i]){ const x=150+i*55, wt=S.water===i+1; for(let k=0;k<3;k++) fx+=pr(x,50,k+i,wt?'#6cc4ff':'#dfe6ea',wt?3:4); }
+  for(let i=0;i<6;i++) if(fxT[i]>fl){ const x=160+i*55; for(let k=0;k<4;k++) fx+=pr(x,16,k+i,k%2?'#ffd25a':'#fff',2.5); }
+  $('fx').innerHTML=fx;
+  $('bsR').setAttribute('fill',S.run?'#555':(gKey==='Paso 6/6 · ¡START!'&&Math.sin(fl/8)>0?'#3ddc6a':'#2b5a3a')); $('bsT').textContent=S.run?'● RUN':'▶ START';
+  $('smk').innerHTML=S.run?[0,1,2,3].map(k=>{ const f=(fl/50+k/4)%1; return `<circle cx="${580+Math.sin(f*6+k)*4}" cy="${34-f*30}" r="${2+f*6}" fill="#aaa" opacity="${(1-f)*.5}"/>`; }).join(''):'';
+  for(let i=0;i<6;i++){ $('fb'+i).setAttribute('fill',S.bleed[i]?(Math.sin(fl/6)>0?'#ff3b3b':'#7a1f1f'):'#3ddc6a'); $('cy'+i).setAttribute('stroke',i===selCyl?'#ffc83d':'#667'); }
+  $('tech').textContent=S.run?'🎉':(performance.now()<tUntil?'😰':'👷');
+  const d=((ang+PHs[selCyl])%360+360)%360, t=d*D, ys=170-gx(t), top=ys-8, px=60+R_*Math.sin(t), py=170-R_*Math.cos(t), p=pcyl(d,S.run);
+  const w=S.busy&&S.water===selCyl+1, g=Math.min(1,p/120), col=w?'#2a6aa8':`rgb(${40+Math.round(215*g)},${30+Math.round(100*g)},20)`;
+  const ev=d>80&&d<150?6:0, po=top>96?'#6cc4ff':'#333';
+  $('zs').innerHTML=`<rect x="30" y="40" width="60" height="96" fill="#1a1d21" stroke="#667" stroke-width="2"/><rect x="31" y="41" width="58" height="${Math.max(0,top-41)}" fill="${col}"/>`
+   +`<rect x="26" y="96" width="6" height="14" fill="${po}"/><rect x="88" y="96" width="6" height="14" fill="${po}"/><rect x="55" y="26" width="10" height="15" fill="${S.run&&(d<25||d>350)?'#ffcf5a':'#889'}"/>`
+   +`<line x1="77" y1="24" x2="77" y2="${42+ev}" stroke="#cfd3d6" stroke-width="3"/><rect x="71" y="${40+ev}" width="12" height="3" fill="#cfd3d6"/>`
+   +`<rect x="32" y="${top}" width="56" height="16" fill="#9aa0a6"/><line x1="60" y1="${ys}" x2="${px}" y2="${py}" stroke="#cfd3d6" stroke-width="5"/>`
+   +`<circle cx="60" cy="170" r="22" fill="none" stroke="#667"/><circle cx="${px}" cy="${py}" r="5" fill="#ff3b3b"/>`
+   +`<text x="2" y="24" fill="#9aa0a6" font-size="7">inyector↓</text><text x="80" y="22" fill="#9aa0a6" font-size="7">v.escape</text><text x="2" y="108" fill="#9aa0a6" font-size="7">lumbreras</text><text x="2" y="196" fill="#9aa0a6" font-size="7">cigüeñal</text>`;
+  $('zT').textContent='CORTE DEL CILINDRO '+(selCyl+1)+' + DIAGRAMA p-V · toca otro cilindro del diagrama';
+  $('zN').textContent=w?'Hay líquido: es incompresible (dp=K·dV/V). Con las indicadoras abiertas escapa y no se dispara la presión.':S.run?'Ciclo 2T: compresión (γ≈1.35) → combustión (pico ≈120 bar) → expansión → escape/barrido. p ahora: '+p.toFixed(0)+' bar.':'Giro sin combustión: compresión y expansión coinciden (sin trabajo útil). p ahora: '+p.toFixed(0)+' bar.';
+  const c=$('pv').getContext('2d'); c.clearRect(0,0,210,150); c.strokeStyle='#556'; c.lineWidth=1; c.strokeRect(20,6,184,126); c.fillStyle='#9aa0a6'; c.font='9px monospace'; c.fillText('p',6,14); c.fillText('V →',176,146);
+  const X=V=>20+(V-1)/13*184, Y=P=>132-Math.min(140,P)/140*126; c.beginPath();
+  for(let k=240;k<=600;k+=4){ const dd=k%360; const x=X(VOL(dd*D)), y=Y(pcyl(dd,S.run)); k===240?c.moveTo(x,y):c.lineTo(x,y); }
+  c.strokeStyle=S.run?'#ffc83d':'#6cc4ff'; c.lineWidth=2; c.stroke(); c.fillStyle='#ff3b3b'; c.fillRect(X(VOL(t))-3,Y(p)-3,6,6); }
+
+function tips(){
+  ['man','stubs','tkF','vlv'].forEach(i=>$(i).classList.add('ga')); ['oil','pmp'].forEach(i=>$(i).classList.add('go'));
+  let f='<path id="frail" class="gf" d="M495 14H120" fill="none" stroke="#a0722a" stroke-width="3" stroke-dasharray="6 5"/><rect class="gf" x="495" y="3" width="44" height="22" fill="#3a2c12" stroke="#a0722a"/><text class="gf" id="ftT" x="506" y="17">HFO</text>';
+  for(let i=0;i<6;i++){ const x=130+i*55; f+=`<line class="gf" x1="${x+30}" y1="20" x2="${x+30}" y2="62" stroke="#a0722a" stroke-width="2"/><rect class="gf clk" id="fb${i}" x="${x+22}" y="6" width="16" height="12" fill="#2a2a2a" stroke="#ccc"/><text class="gf" x="${x+23}" y="15">FIP</text>`; }
+  $('eng').insertAdjacentHTML('beforeend',f);
+  const T={vlv:'Válvula maestra de aire (~30 bar): libera el aire del botellón hacia las culatas.',pmp:'Bomba de pre-lubricación: crea ≥1.5 bar de aceite antes de girar el eje.',tgc:'Virador: hace girar el motor muy lento; debe estar desacoplado para arrancar.',bil:'Sentina/cárter: se inspecciona antes de mover el eje.',oil:'Circuito de aceite a los cojinetes.',man:'Colector de aire de arranque hacia cada culata.',tkF:'Botellón de aire (el nivel es la presión).',frail:'Línea de combustible hacia las bombas de inyección.',fw:'Volante y eje: llevan el giro a la hélice.'};
+  const tt=(e,s)=>{ const n=document.createElementNS('http://www.w3.org/2000/svg','title'); n.textContent=s; e.appendChild(n); };
+  for(const k in T) tt($(k),T[k]);
+  for(let i=0;i<6;i++){ const c=$('cy'+i); c.classList.add('clk'); c.onclick=()=>{ selCyl=i; }; tt(c,'Cilindro '+(i+1)+': clic para ver su corte y su diagrama p-V.'); tt($('ck'+i),'Válvula de indicador: abierta deja escapar líquido.'); $('fb'+i).onclick=()=>bleedFIP(i); tt($('fb'+i),'Bomba de inyección (FIP): clic para purgar el aire.'); }
+  document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ $('eng').setAttribute('class',b.dataset.l); document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('sel',x===b)); });
+}
+
+const fxT=Array(6).fill(0), pv={air:false,busy:false,run:false}; let dripT=0, pumpN=null, noiseB=null;
+function noise(){ if(!noiseB){ noiseB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); const d=noiseB.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return noiseB; }
+function hiss(sec,vol,fq){ if(!AC) return; const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(), n=AC.currentTime; s.buffer=noise(); s.loop=true; f.type='highpass'; f.frequency.value=fq;
+  g.gain.setValueAtTime(.001,n); g.gain.linearRampToValueAtTime(vol,n+.08); g.gain.exponentialRampToValueAtTime(.001,n+sec); s.connect(f).connect(g).connect(AC.destination); s.start(); s.stop(n+sec); }
+function drip(){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(), n=AC.currentTime; o.type='sine'; o.frequency.setValueAtTime(1400,n); o.frequency.exponentialRampToValueAtTime(450,n+.09);
+  g.gain.setValueAtTime(.05,n); g.gain.exponentialRampToValueAtTime(.001,n+.12); o.connect(g).connect(AC.destination); o.start(); o.stop(n+.13); }
+function purgeFx(i){ fxT[i]=fl+90; hiss(.5,.03,2000); drip(); setTimeout(drip,150); }
+let amb=null;
+function ambient(){ if(!amb){ const mk=(ty,fq,q)=>{ const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=noise(); s.loop=true; f.type=ty; f.frequency.value=fq; f.Q.value=q; g.gain.value=0; s.connect(f).connect(g).connect(AC.destination); s.start(); return {f,g}; };
+    amb={wind:mk('bandpass',350,.7),rain:mk('highpass',2800,.5)}; }
+  const st=S.run?.35:1;
+  amb.wind.g.gain.value=(.05+.03*Math.sin(fl/90)+.02*Math.sin(fl/37+1))*st; amb.wind.f.frequency.value=320+160*Math.sin(fl/70);
+  amb.rain.g.gain.value=(.022+.006*Math.sin(fl/13))*st; }
+function sfxTick(dt){ if(!AC) return;
+  if(S.air&&!pv.air) hiss(1.6,.06,2500); if(!S.air&&pv.air) hiss(.6,.04,3500);
+  if(S.busy&&!pv.busy) hiss(1.2,.05,3000); if(S.run&&!pv.run){ hiss(.8,.07,1800); hiss(1.4,.12,250); }
+  pv.air=S.air; pv.busy=S.busy; pv.run=S.run;
+  if(S.busy&&S.water>0){ dripT-=dt; if(dripT<=0){ drip(); dripT=.25+Math.random()*.3; } }
+  if(S.pump&&!pumpN){ const o=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain(); o.type='sawtooth'; f.type='lowpass'; f.frequency.value=500; g.gain.value=.014; o.connect(f).connect(g).connect(AC.destination); o.start(); pumpN=o; }
+  if(pumpN){ pumpN.frequency.value=90+S.oil*35; if(!S.pump){ pumpN.stop(); pumpN=null; } } ambient(); }
+
+function drawShip(){
+  const dk=S.rpm<45?.9:Math.min(.8,Math.max(.1,(S.gov-25)/60+.15)), gc=Math.round(190-dk*150), dkc='rgb('+gc+','+gc+','+gc+')', t=Math.max(0,S.t), x0=40+(1-t/T0)*330, calm=S.run?.25:1, roll=(Math.sin(fl/28)*4+Math.sin(fl/11)*1.5)*calm, by=Math.sin(fl/20)*3*calm;
+  let w='M0 130L0 84'; for(let x=0;x<=600;x+=20) w+='L'+x+' '+(84+Math.sin(x/28+fl/22)*3*(S.run?.5:1)); w+='L600 130Z';
+  let rain=''; if(!S.run) for(let i=0;i<24;i++) rain+='M'+((i*37+fl*3)%600)+' '+((i*53+fl*9)%130)+'l-4 9';
+  const em=performance.now()<tUntil?'#ff3b3b':(S.run?'#3ddc6a':'#ffc83d'), spd=S.rpm>1?Math.sin(ang*D)*2:0;
+  const smoke=S.run?[0,1,2].map(k=>{ const f=(fl/60+k/3)%1; return `<circle cx="${35+f*25}" cy="${12-f*12}" r="${(2+f*6)*(.6+dk)}" fill="${dkc}" opacity="${(1-f)*(.35+dk*.5)}"/>`; }).join(''):'';
+  const dist=Math.round(DIST0*t/T0);
+  $('sc').innerHTML=`<rect width="600" height="84" fill="${S.run?'#17283a':'#101c28'}"/>`
+   +`<g transform="translate(${x0},${by}) rotate(${roll} 80 82)">`
+   +`<polygon points="0,64 150,64 165,58 148,90 10,90" fill="#2a2e33" stroke="#667"/><polygon points="9,82 149,82 148,90 10,90" fill="#5a2a1a"/>`
+   +`<rect x="10" y="36" width="34" height="28" fill="#8a9097"/><rect x="14" y="28" width="26" height="8" fill="#aab0b6"/><rect x="30" y="12" width="10" height="24" fill="#aa3a2a"/>`
+   +`<rect x="16" y="42" width="5" height="4" fill="#ffc83d"/><rect x="25" y="42" width="5" height="4" fill="#ffc83d"/><rect x="16" y="50" width="5" height="4" fill="#ffc83d"/>`
+   +`<rect x="52" y="50" width="22" height="14" fill="#8a5a3b"/><rect x="76" y="50" width="22" height="14" fill="#3b6a8a"/><rect x="100" y="50" width="22" height="14" fill="#6a8a3b"/><rect x="124" y="52" width="20" height="12" fill="#8a3b3b"/>`
+   +`<rect x="8" y="66" width="60" height="22" fill="${em}" fill-opacity=".18" stroke="${em}" stroke-dasharray="3 2"/><rect x="18" y="72" width="34" height="12" fill="#556"/>`
+   +[0,1,2,3].map(k=>`<rect x="${20+k*8}" y="${74+spd*(k%2?-1:1)}" width="5" height="6" fill="#9aa0a6"/>`).join('')
+   +`<line x1="18" y1="80" x2="-4" y2="80" stroke="#889" stroke-width="3"/><g transform="translate(-6,80) rotate(${S.clutch?ang*3:0})"><ellipse rx="2" ry="9" fill="#c9a43a"/><ellipse rx="9" ry="2" fill="#c9a43a"/></g>`
+   +`<text x="72" y="80">◂ SALA DE MÁQUINAS</text>${smoke}</g>`
+   +`<path d="${w}" fill="#14394f" opacity=".85"/><polygon points="520,130 520,74 540,52 560,66 580,42 600,50 600,130" fill="#4a3a2a"/><polygon points="574,42 582,42 580,22 576,22" fill="#e8e8e8"/><rect x="576" y="29" width="4" height="4" fill="#c33"/><rect x="576" y="17" width="4" height="5" fill="#ffd25a"/><polygon points="578,20 380,${(10+Math.sin(fl/45)*30).toFixed(1)} 380,${(30+Math.sin(fl/45)*30).toFixed(1)}" fill="#ffe9a0" opacity="${(.06+Math.max(0,Math.cos(fl/45))*.28).toFixed(2)}"/><circle cx="588" cy="62" r="1.5" fill="#ffd25a"/><circle cx="594" cy="58" r="1.5" fill="#ffd25a"/><circle cx="598" cy="64" r="1.5" fill="#ffd25a"/><text x="548" y="38">FARO</text>`
+   +`<circle cx="${516+Math.sin(fl/10)*3}" cy="88" r="4" fill="#fff" opacity=".6"/><path d="${rain}" stroke="#8ab" stroke-width="1" opacity=".5"/>`
+   +`<text x="6" y="10" style="fill:#fff">M/V PATAGONIA STAR · buque mercante · motor diésel 2T</text>`
+   +`<text x="6" y="20" style="fill:${S.run?'#3ddc6a':'#ffc83d'}">${S.run?(S.clutch?'HÉLICE ACOPLADA · '+(S.v*1.5).toFixed(1)+' nudos'+(S.safe?' · A SALVO':''):'MOTOR EN RALENTÍ · hélice desacoplada: sigue sin avanzar'):'A LA DERIVA · SIN PROPULSIÓN · temporal'}</text>`
+   +`<text x="594" y="10" text-anchor="end" style="fill:${dist<400&&!S.run?'#ff3b3b':'#fff'}">COSTA DE COMODORO RIVADAVIA · faro (Lee Shore): ${dist} m</text>`; }
+
+function engBtns(){ $('eng').insertAdjacentHTML('beforeend','<g id="smk" pointer-events="none"></g><g id="fx" pointer-events="none"></g><text x="400" y="223">potencia → eje de cola → hélice ▸</text><g id="clu" class="clk" onclick="$(\'bClutch\').onclick()"><rect x="552" y="124" width="7" height="32" fill="#8a9097" stroke="#222"/><rect id="cluB" x="574" y="124" width="7" height="32" fill="#ff3b3b" stroke="#222"/><line id="cluS" x1="581" y1="140" x2="598" y2="140" stroke="#889" stroke-width="4"/><title>Embrague del eje de cola: conecta el motor con la hélice</title></g><text x="556" y="118">EMBRAGUE</text>'
+  +'<g class="clk" onclick="$(\'start\').onclick()"><rect id="bsR" x="538" y="184" width="58" height="22" fill="#2b5a3a" stroke="#3ddc6a" stroke-width="2"/><text id="bsT" x="548" y="199" style="fill:#fff;font-size:11px">▶ START</text></g>'
+  +'<g class="clk" onclick="stopRun()"><rect x="538" y="209" width="58" height="14" fill="#5a2020" stroke="#ff3b3b"/><text x="553" y="219" style="fill:#fff;font-size:9px">■ STOP</text></g>'); }
+function stopRun(){ audio(); if(!S.run) return; if(S.clutch) return pen(10,'Desacopla la hélice (embrague) antes de parar el motor.'); S.run=false; stopEngine(); msg('Motor detenido. Puedes volver a arrancarlo con START.','good');
+  edu('Parada: se corta el combustible y el motor sigue girando unos segundos por la inercia del volante hasta frenar por fricción y bombeo.'); }
+QS['Paso 7/8 · Acopla la hélice']='¿Qué pasa si el motor gira pero la hélice no está conectada? ¿A qué régimen conviene acoplar para no dar un golpe de par?'; QS['Paso 8/8 · Acelera con el governor']='¿Por qué conviene subir la carga de forma progresiva? ¿Qué ves en el humo de la chimenea y en las RPM al acelerar?'; QS['✔ Buque a salvo']='¡Misión cumplida! ¿Qué diferencia hay entre un motor en ralentí y una propulsión efectiva?';
+$('rst').onclick=reset; $('bSlow2').onclick=()=>$('bSlow').onclick();
+
+$('bClutch').onclick=()=>{ audio(); if(S.over) return;
+  if(!S.run) return pen(5,'No se puede acoplar la hélice con el motor parado.');
+  if(!S.clutch){ if(S.gov>25) return pen(10,'Choque de carga: baja el governor a ralentí antes de acoplar.'); if(S.rpm<50) return msg('Espera a que el motor se estabilice en ralentí.');
+    S.clutch=true; beep(160,.25,'sawtooth'); msg('Hélice acoplada. Sube el governor de a poco.','good');
+    edu('Embrague de hélice: conecta el motor con la hélice. Se acopla en ralentí para evitar un golpe de par; luego se sube el governor de forma progresiva y el buque gana velocidad.'); }
+  else { S.clutch=false; msg('Hélice desacoplada: el motor gira en vacío.'); } };
+
+{ const m=document.createElement('div'); m.id='main'; m.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:8px;align-items:start';
+  $('zs').closest('.card').before(m); m.append($('v1'),$('v2'));$('v2').classList.remove('hide'); $('n1').style.display=$('n2').style.display='none'; }
+{ const h=document.createElement('div'), r=document.createElement('div'), top=document.querySelector('.top'); h.id='hud'; r.id='hr'; top.before(h); r.append($('sc'),$('g0').closest('.card')); h.append(top,r); }
+
+buildEng(); tips(); engBtns(); buildCocks(); buildFips(); reset(); story();
+edu('Objetivo: arrancar el 2T antes de varar. Sigue los 6 pasos; aquí verás el fundamento técnico de cada acción.');
+requestAnimationFrame(tick);
+</script></body></html>
